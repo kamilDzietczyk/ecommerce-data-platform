@@ -28,10 +28,31 @@ services:
     ports:
       - "8084:80"
 
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
     depends_on:
       - postgres
 
     restart: unless-stopped
+  
+  dbt:
+    build:
+      context: ./dbt
+
+    container_name: ecommerce_dbt
+
+    volumes:
+      - ./dbt:/usr/app/dbt
+      - ./data:/usr/app/data
+
+    working_dir: /usr/app/dbt
+
+    depends_on:
+      - postgres
+
+    tty: true
 
 volumes:
   postgres_data:
+  pgadmin_data:

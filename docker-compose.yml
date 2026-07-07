@@ -55,6 +55,30 @@ services:
       - postgres
 
     tty: true
+  
+  ingestion:
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+
+    container_name: ecommerce_ingestion
+
+    volumes:
+      - .:/usr/app
+
+    working_dir: /usr/app
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
+    depends_on:
+      - postgres
+
+    tty: true    
 
 volumes:
   postgres_data:

@@ -48,6 +48,9 @@ services:
 
     working_dir: /usr/app/dbt
 
+    ports:
+    - "8085:8085"
+
     depends_on:
       - postgres
 

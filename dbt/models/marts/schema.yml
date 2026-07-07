@@ -1,0 +1,66 @@
+version: 2
+
+models:
+
+  - name: dim_customers
+    description: Customer dimension
+
+    columns:
+
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        tests:
+          - not_null
+
+  - name: dim_products
+    description: Product dimension
+
+    columns:
+
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_orders
+    description: Orders fact table
+
+    columns:
+
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+
+  - name: fct_order_items
+    description: Order items fact table
+
+    columns:
+
+      - name: order_item_id
+        tests:
+          - unique
+          - not_null
+
+      - name: order_id
+        tests:
+          - relationships:
+              to: ref('fct_orders')
+              field: order_id
+
+      - name: product_id
+        tests:
+          - relationships:
+              to: ref('dim_products')
+              field: product_id

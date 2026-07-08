@@ -8,13 +8,13 @@ ecommerce_data_platform:
 
       type: postgres
 
-      host: postgres
-      port: 5432
+      host: "{{ env_var('POSTGRES_HOST') }}"
+      port: "{{ env_var('POSTGRES_PORT') | as_number }}"
 
-      user: postgres
-      password: postgres
+      user: "{{ env_var('POSTGRES_USER') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
 
-      dbname: ecommerce_dw
+      dbname: "{{ env_var('POSTGRES_DB') }}"
 
       schema: public
 

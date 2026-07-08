@@ -160,6 +160,22 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - .:/opt/airflow/project
     command: scheduler
+    
+  metabase:
+    image: metabase/metabase:latest
+    container_name: ecommerce_metabase
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - metabase_data:/metabase-data
+
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+
+    depends_on:
+      - postgres
   
   ingestion:
     build:
@@ -189,4 +205,5 @@ volumes:
   postgres_data:
   pgadmin_data:
   airflow_postgres_data:
+  metabase_data:
 

@@ -257,6 +257,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       AI_DB_USER: ${AI_DB_USER}
       AI_DB_PASSWORD: ${AI_DB_PASSWORD}
+      AI_PROVIDER: ${AI_PROVIDER}
 
     volumes:
       - .:/usr/app

@@ -241,7 +241,34 @@ services:
       - postgres
 
     tty: true
+  ai-assistant:
+    build:
+      context: .
+      dockerfile: ai_assistant/Dockerfile
 
+    container_name: ecommerce_ai_assistant
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_HOST: ${POSTGRES_DOCKER_HOST}
+      POSTGRES_PORT: ${POSTGRES_DOCKER_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      AI_DB_USER: ${AI_DB_USER}
+      AI_DB_PASSWORD: ${AI_DB_PASSWORD}
+
+    volumes:
+      - .:/usr/app
+
+    working_dir: /usr/app
+
+    ports:
+      - "${AI_ASSISTANT_PORT}:8000"
+
+    depends_on:
+      - postgres
+      
 volumes:
   postgres_data:
   pgadmin_data:

@@ -64,3 +64,29 @@ models:
           - relationships:
               to: ref('dim_products')
               field: product_id
+  
+  - name: mart_monthly_sales
+    description: Monthly ecommerce sales aggregated for forecasting.
+
+    columns:
+
+      - name: sales_month
+        description: First day of the sales month.
+        tests:
+          - unique
+          - not_null
+
+      - name: total_orders
+        description: Total number of orders in the month.
+        tests:
+          - not_null
+
+      - name: total_revenue
+        description: Total monthly revenue.
+        tests:
+          - not_null
+
+      - name: average_order_value
+        description: Monthly revenue divided by monthly order count.
+        tests:
+          - not_null

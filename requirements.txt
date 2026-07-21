@@ -4,3 +4,5 @@ python-dotenv
 sqlalchemy
 tqdm
 faker
+statsmodels>=0.14,<0.15
+SQLAlchemy>=2,<3

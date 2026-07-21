@@ -16,3 +16,5 @@ dbt_packages/
 .airflow/
 
 .DS_Store
+# Generated forecasting output
+forecasting/output/

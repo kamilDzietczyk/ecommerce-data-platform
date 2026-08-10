@@ -68,6 +68,31 @@ def main():
 
     print("Testing blocked write operation...")
 
+    print(
+    "Testing blocked access to forecast..."
+)
+
+    try:
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM forecast.sales_forecast
+            """
+        )
+
+        raise RuntimeError(
+            "Security check failed. "
+            "AI user can access "
+            "forecast.sales_forecast."
+        )
+
+    except psycopg2.Error:
+        connection.rollback()
+
+        print(
+            "forecast access blocked correctly."
+        )
+
     try:
         cursor.execute(
             """

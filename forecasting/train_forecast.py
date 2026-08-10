@@ -11,6 +11,10 @@ from statsmodels.tsa.holtwinters import (
 
 from forecasting.data import load_monthly_sales
 
+from forecasting.storage import (
+    save_forecast_to_database,
+)
+
 
 HOLDOUT_MONTHS = 12
 FORECAST_HORIZON_MONTHS = 12
@@ -618,12 +622,22 @@ def main() -> None:
         forecast_dataframe=forecast_dataframe,
     )
 
+    saved_rows = save_forecast_to_database(
+        forecast_dataframe
+    )
+
     print_report(
         full_series=full_series,
         training_series=training_series,
         test_series=test_series,
         metrics_dataframe=metrics_dataframe,
         forecast_dataframe=forecast_dataframe,
+        
+    )
+    print()
+    print(
+        "Forecast saved to PostgreSQL: "
+        f"{saved_rows} rows"
     )
 
 

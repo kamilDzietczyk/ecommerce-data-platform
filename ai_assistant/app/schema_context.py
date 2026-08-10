@@ -1,19 +1,66 @@
 MARTS_SCHEMA_CONTEXT = """
-Available PostgreSQL analytical tables:
+You have access only to the PostgreSQL analytical schema named marts.
 
+Use only the tables and columns explicitly listed below.
+Never assume that another column or table exists.
+
+
+==================================================
 1. marts.mart_daily_sales
+==================================================
+
 Purpose:
 - Historical daily sales aggregated for the entire store.
+- Use for historical total sales and revenue analysis by day or date range.
+
+Grain:
+- One row represents one historical sales day.
 
 Columns:
-- sales_date: date of sales
-- total_orders: number of orders
-- total_revenue: total revenue
-- average_order_value: average order value
+- sales_date
+- total_orders
+- total_revenue
+- average_order_value
 
-2. marts.mart_product_sales
+
+==================================================
+2. marts.mart_monthly_sales
+==================================================
+
+Purpose:
+- Historical monthly sales aggregated for the entire store.
+- Prepared from historical daily sales.
+- Useful for monthly historical trends and forecasting input analysis.
+
+Grain:
+- One row represents one historical calendar month.
+
+Columns:
+- sales_month
+- first_sales_date
+- last_sales_date
+- number_of_days
+- total_orders
+- total_revenue
+- average_order_value
+- is_complete_month
+
+Important rules:
+- This table contains historical actual values, not forecasts.
+- Use is_complete_month = TRUE when analysis requires complete months.
+- sales_month represents the first day of the month.
+
+
+==================================================
+3. marts.mart_product_sales
+==================================================
+
 Purpose:
 - Historical sales aggregated by product.
+- Use for product rankings and product/category totals when no date filter is required.
+
+Grain:
+- One row represents one product.
 
 Columns:
 - product_id
@@ -22,9 +69,21 @@ Columns:
 - total_quantity
 - total_sales
 
-3. marts.mart_customer_value
+Important rules:
+- This table does not contain order_date.
+- Do not use it for historical product analysis requiring a specific date range.
+- For product sales filtered by date, use the fact tables described below.
+
+
+==================================================
+4. marts.mart_customer_value
+==================================================
+
 Purpose:
 - Historical customer value aggregated by customer.
+
+Grain:
+- One row represents one customer.
 
 Columns:
 - customer_id
@@ -36,7 +95,17 @@ Columns:
 - lifetime_value
 - average_order_value
 
-4. marts.dim_customers
+
+==================================================
+5. marts.dim_customers
+==================================================
+
+Purpose:
+- Customer dimension.
+
+Grain:
+- One row represents one customer.
+
 Columns:
 - customer_id
 - first_name
@@ -46,7 +115,17 @@ Columns:
 - city
 - created_at
 
-5. marts.dim_products
+
+==================================================
+6. marts.dim_products
+==================================================
+
+Purpose:
+- Product dimension.
+
+Grain:
+- One row represents one product.
+
 Columns:
 - product_id
 - product_name
@@ -55,7 +134,17 @@ Columns:
 - stock_quantity
 - created_at
 
-6. marts.dim_dates
+
+==================================================
+7. marts.dim_dates
+==================================================
+
+Purpose:
+- Calendar date dimension.
+
+Grain:
+- One row represents one calendar date.
+
 Columns:
 - date_day
 - year
@@ -66,7 +155,14 @@ Columns:
 - week
 - is_weekend
 
-7. marts.fct_orders
+
+==================================================
+8. marts.fct_orders
+==================================================
+
+Purpose:
+- Historical order fact table.
+
 Grain:
 - One row represents one order.
 
@@ -77,9 +173,20 @@ Columns:
 - order_status
 - total_amount
 
-8. marts.fct_order_items
+Important rules:
+- order_date exists in this table.
+- Use this table when order-level historical analysis requires a date filter.
+
+
+==================================================
+9. marts.fct_order_items
+==================================================
+
+Purpose:
+- Historical order item fact table.
+
 Grain:
-- One row represents one order item.
+- One row represents one item within an order.
 
 Columns:
 - order_item_id
@@ -89,26 +196,122 @@ Columns:
 - unit_price
 - line_total
 
-Relationships:
-- marts.fct_orders.customer_id = marts.dim_customers.customer_id
-- marts.fct_order_items.order_id = marts.fct_orders.order_id
-- marts.fct_order_items.product_id = marts.dim_products.product_id
+Important rules:
+- This table does NOT contain order_date.
+- Never use oi.order_date when oi represents marts.fct_order_items.
+- Join to marts.fct_orders through order_id when a date filter is required.
+
+
+==================================================
+10. marts.mart_sales_forecast
+==================================================
+
+Purpose:
+- Latest monthly total revenue forecast.
+- Contains future monthly revenue predictions generated by the forecasting pipeline.
+- Values are predictions, not historical actual sales.
+
+Grain:
+- One row represents one forecasted calendar month from the latest forecasting run.
+
+Columns:
+- forecast_month
+- predicted_revenue
+- model_name
+- trained_at_utc
+- history_start_month
+- history_end_month
+- history_months
 
 Important rules:
+- Use this table for future total sales or future total revenue questions.
+- forecast_month represents the month being predicted.
+- predicted_revenue is the predicted total revenue for that month.
+- predicted_revenue is a forecast, not an actual historical value.
+- Never invent a future revenue value.
+- Never calculate a future revenue value manually from historical tables when a matching forecast exists.
+- Current forecasting is available only for total monthly revenue.
+- Product-level forecasting is not available.
+- Category-level forecasting is not available.
+- Customer-level forecasting is not available.
+
+
+==================================================
+RELATIONSHIPS
+==================================================
+
+Historical fact/dimension relationships:
+
+- marts.fct_orders.customer_id
+  = marts.dim_customers.customer_id
+
+- marts.fct_order_items.order_id
+  = marts.fct_orders.order_id
+
+- marts.fct_order_items.product_id
+  = marts.dim_products.product_id
+
+
+==================================================
+HISTORICAL VS FORECAST RULES
+==================================================
+
+Historical data:
+- marts.mart_daily_sales
+- marts.mart_monthly_sales
+- marts.mart_product_sales
+- marts.mart_customer_value
+- marts.fct_orders
+- marts.fct_order_items
+- marts.dim_customers
+- marts.dim_products
+- marts.dim_dates
+
+Forecast data:
+- marts.mart_sales_forecast
+
+Rules:
+- Historical questions must use historical marts or historical fact/dimension tables.
+- Future total revenue questions must use marts.mart_sales_forecast.
+- Never present predicted_revenue as an actual historical value.
+- Never use mart_sales_forecast to answer historical actual-sales questions.
+- Never use historical sales tables to invent future values.
+- If the requested future month does not exist in mart_sales_forecast, return no result rather than inventing a value.
+
+
+==================================================
+DATE RULES
+==================================================
+
 - order_date exists only in marts.fct_orders.
 - sales_date exists only in marts.mart_daily_sales.
+- sales_month exists only in marts.mart_monthly_sales.
+- forecast_month exists only in marts.mart_sales_forecast.
 - marts.fct_order_items does not contain order_date.
-- Use marts.mart_product_sales for aggregated product sales without a date filter.
-- For product sales filtered by date, join:
-  marts.fct_order_items
-  → marts.fct_orders using order_id
-  → marts.dim_products using product_id.
-- Use marts.mart_daily_sales for historical total sales over time.
-- Use only columns explicitly listed above.
-- Forecasting data is not available yet.
-- Current tables support historical analytics only.
 
-Canonical pattern for product sales filtered by order date:
+Prefer date ranges for month filtering.
+
+Example:
+
+WHERE o.order_date >= DATE '2025-01-01'
+  AND o.order_date < DATE '2025-02-01'
+
+Prefer this over EXTRACT when a simple date range can answer the question.
+
+
+==================================================
+PRODUCT SALES WITH A DATE FILTER
+==================================================
+
+When the user asks about product sales for a historical period:
+
+1. Start with marts.fct_order_items AS oi.
+2. Join marts.fct_orders AS o using order_id.
+3. Join marts.dim_products AS p using product_id.
+4. Filter using o.order_date.
+5. Aggregate oi.quantity and oi.line_total.
+
+Canonical pattern:
 
 SELECT
     p.product_id,
@@ -127,9 +330,90 @@ GROUP BY
     p.product_id,
     p.product_name,
     p.category
-ORDER BY total_sales DESC
+ORDER BY
+    total_sales DESC
 LIMIT 50
 
 Adapt the date range to the user's question.
-Never use oi.order_date because order_date belongs only to fct_orders.
+
+Never use:
+- oi.order_date
+
+because order_date belongs to marts.fct_orders.
+
+
+==================================================
+HISTORICAL MONTHLY SALES
+==================================================
+
+For historical monthly total revenue questions, prefer:
+
+SELECT
+    sales_month,
+    total_revenue,
+    total_orders,
+    average_order_value
+FROM marts.mart_monthly_sales
+WHERE sales_month >= DATE '2025-01-01'
+  AND sales_month < DATE '2026-01-01'
+  AND is_complete_month = TRUE
+ORDER BY sales_month
+
+
+==================================================
+FORECASTED MONTHLY SALES
+==================================================
+
+For a question about one future month, use:
+
+SELECT
+    forecast_month,
+    predicted_revenue,
+    model_name,
+    trained_at_utc
+FROM marts.mart_sales_forecast
+WHERE forecast_month = DATE '2026-12-01'
+
+For a future range, use:
+
+SELECT
+    forecast_month,
+    predicted_revenue,
+    model_name
+FROM marts.mart_sales_forecast
+WHERE forecast_month >= DATE '2026-06-01'
+  AND forecast_month < DATE '2027-01-01'
+ORDER BY forecast_month
+
+
+==================================================
+GENERAL SQL RULES
+==================================================
+
+- Generate PostgreSQL SQL only.
+- Generate exactly one query.
+- Use only SELECT or WITH.
+- Use only tables from the marts schema listed above.
+- Use only columns explicitly listed above.
+- Never access raw.
+- Never access staging.
+- Never access public.
+- Never access forecast directly.
+- Never access information_schema.
+- Never access pg_catalog.
+- Never use INSERT.
+- Never use UPDATE.
+- Never use DELETE.
+- Never use DROP.
+- Never use ALTER.
+- Never use TRUNCATE.
+- Never use CREATE.
+- Never use GRANT.
+- Never use REVOKE.
+- Never use COPY.
+- Never use CALL.
+- Never use EXECUTE.
+- Never invent tables or columns.
+- Verify every table alias and column before returning SQL.
+- Use LIMIT 50 for detailed result sets unless an aggregate query naturally returns fewer rows.
 """

@@ -43,6 +43,7 @@ models:
               to: ref('dim_customers')
               field: customer_id
 
+
   - name: fct_order_items
     description: Order items fact table
 
@@ -88,5 +89,43 @@ models:
 
       - name: average_order_value
         description: Monthly revenue divided by monthly order count.
+        tests:
+          - not_null
+          
+  - name: mart_sales_forecast
+    description: Latest 12-month monthly revenue forecast.
+
+    columns:
+
+      - name: forecast_month
+        description: Month being forecasted.
+        tests:
+          - unique
+          - not_null
+
+      - name: predicted_revenue
+        description: Predicted total monthly revenue.
+        tests:
+          - not_null
+
+      - name: model_name
+        description: Forecasting model used to generate the prediction.
+        tests:
+          - not_null
+
+      - name: trained_at_utc
+        description: UTC timestamp of the model training run.
+        tests:
+          - not_null
+
+      - name: history_start_month
+        tests:
+          - not_null
+
+      - name: history_end_month
+        tests:
+          - not_null
+
+      - name: history_months
         tests:
           - not_null

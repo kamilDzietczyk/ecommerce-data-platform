@@ -16,6 +16,7 @@ ALLOWED_TABLES = {
     "marts.dim_dates",
     "marts.fct_orders",
     "marts.fct_order_items",
+    "marts.mart_sales_forecast"
 }
 
 
